@@ -1,0 +1,41 @@
+[Unit]
+Description=CCTV Pipeline - Complete Capture, Upload, and Server
+Documentation=https://github.com/your-repo/cctv-s3-pipeline
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pi
+Group=pi
+WorkingDirectory=/home/pi/cctv-s3-pipeline
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+EnvironmentFile=/home/pi/cctv-s3-pipeline/.env
+
+# Run the complete pipeline (capture + upload + server)
+ExecStart=/usr/bin/python3 -m src.main --config /home/pi/cctv-s3-pipeline/config.yaml
+ExecReload=/bin/kill -HUP $MAINPID
+
+# Restart policy
+Restart=always
+RestartSec=10
+StartLimitInterval=300
+StartLimitBurst=5
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=cctv-pipeline
+
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/pi/cctv-s3-pipeline/data
+
+# Resource limits (adjust based on your Pi)
+# MemoryMax=512M
+# CPUQuota=80%
+
+[Install]
+WantedBy=multi-user.target

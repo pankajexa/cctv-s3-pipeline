@@ -1,0 +1,152 @@
+# CCTV to S3 Pipeline Configuration
+# Copy this file to config.yaml and update values
+
+# Camera Settings
+camera:
+  # Unique identifier for this camera
+  name: "cctv-cam-01"
+  
+  # Network settings
+  ip: "192.168.1.250"          # Camera IP address
+  port: 554                     # RTSP port (usually 554)
+  
+  # Authentication (leave empty if no auth required)
+  username: "admin"
+  password: "Welcome@123"  # Loaded from environment variable
+  
+  # RTSP path - CP Plus format (verify in camera web UI)
+  # Common patterns:
+  #   /cam/realmonitor?channel=1&subtype=0  (main stream)
+  #   /cam/realmonitor?channel=1&subtype=1  (sub stream)
+  #   /Streaming/Channels/101               (alternative)
+  rtsp_path: "/cam/realmonitor?channel=1&subtype=1"
+  
+  # Transport protocol: tcp or udp
+  # TCP is more reliable, UDP has lower latency
+  rtsp_transport: "tcp"
+
+# Capture Settings
+capture:
+  # Output resolution (downscaled from 4MP)
+  resolution: "1280x720"
+  
+  # Frame rate (camera native is usually 25fps)
+  # Lower = less bandwidth, still smooth for surveillance
+  framerate: 15
+  
+  # HLS segment duration in seconds
+  # 10s is good balance between latency and reliability
+  segment_duration: 10
+  
+  # Video codec settings
+  video_codec: "copy"           # "copy" = no re-encode, just repackage
+                                 # "libx264" = re-encode (higher CPU)
+  
+  # Audio settings
+  audio_enabled: false           # Disable audio to save bandwidth
+
+# Local Storage Settings
+storage:
+  # How long to keep segments locally (minutes)
+  # Acts as buffer if S3 upload fails
+  local_buffer_minutes: 30
+  
+  # Local segments directory
+  segments_dir: "./data/segments"
+  
+  # Maximum disk usage for segments (MB)
+  # Pipeline will delete oldest uploaded segments if exceeded
+  max_disk_usage_mb: 2000
+  
+  # Database file for state tracking
+  database_path: "./data/segments.db"
+
+# AWS S3 Settings
+s3:
+  # Bucket name (must exist)
+  bucket: "your-cctv-bucket-name"
+  
+  # AWS region
+  region: "ap-south-1"
+  
+  # Object key prefix pattern
+  # Available variables: {camera_name}, {year}, {month}, {day}, {hour}
+  prefix: "cameras/{camera_name}/{year}/{month}/{day}/{hour}/"
+  
+  # Upload settings
+  upload_timeout: 30            # Seconds per upload attempt
+  max_retries: 5                # Retry attempts before marking failed
+  retry_delay: 5                # Initial retry delay (exponential backoff)
+  
+  # Multipart upload threshold (bytes)
+  # Files larger than this use multipart upload
+  multipart_threshold: 8388608  # 8 MB
+  
+  # Storage class for new objects
+  # Options: STANDARD, INTELLIGENT_TIERING, STANDARD_IA, GLACIER
+  storage_class: "STANDARD"
+
+# HLS Server Settings (for real-time viewing)
+server:
+  # Enable local HLS server
+  enabled: true
+  
+  # Server port
+  port: 8080
+  
+  # Bind address (0.0.0.0 for all interfaces)
+  host: "0.0.0.0"
+  
+  # Number of segments to keep in live playlist
+  playlist_segments: 6
+  
+  # CORS settings for browser playback
+  cors_enabled: true
+  cors_origins: "*"
+
+# Logging Settings
+logging:
+  # Log level: DEBUG, INFO, WARNING, ERROR
+  level: "INFO"
+  
+  # Log file path
+  file: "./data/logs/pipeline.log"
+  
+  # Maximum log file size (MB) before rotation
+  max_size_mb: 50
+  
+  # Number of backup log files to keep
+  backup_count: 5
+  
+  # Log format
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  
+  # Also log to stdout
+  console: true
+
+# Health Monitoring
+health:
+  # Health check interval (seconds)
+  check_interval: 30
+  
+  # FFmpeg process restart settings
+  max_restarts: 10              # Max restarts in time window
+  restart_window: 300           # Time window in seconds
+  
+  # Stale segment detection
+  # If no new segment in this time, consider capture dead
+  stale_threshold: 30           # Seconds
+
+# Advanced Settings (usually don't need to change)
+advanced:
+  # FFmpeg thread count (0 = auto)
+  ffmpeg_threads: 0
+  
+  # Segment filename pattern
+  segment_pattern: "segment_%Y%m%d_%H%M%S.ts"
+  
+  # Playlist filename
+  playlist_name: "live.m3u8"
+  
+  # Watchdog polling interval for new segments
+  watchdog_interval: 1.0        # Seconds

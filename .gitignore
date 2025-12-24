@@ -1,0 +1,49 @@
+# Environment and secrets
+.env
+config.yaml
+*.pem
+*.key
+
+# Runtime data
+data/
+*.db
+*.db-journal
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+env/
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs (keep structure, ignore contents)
+*.log
+logs/*
+!logs/.gitkeep
+
+# Test artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Segments (keep structure, ignore contents)
+segments/*
+!segments/.gitkeep

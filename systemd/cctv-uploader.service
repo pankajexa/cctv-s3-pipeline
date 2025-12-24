@@ -1,0 +1,36 @@
+[Unit]
+Description=CCTV S3 Upload Service
+Documentation=https://github.com/your-repo/cctv-s3-pipeline
+After=network-online.target cctv-capture.service
+Wants=network-online.target
+Requires=cctv-capture.service
+
+[Service]
+Type=simple
+User=pi
+Group=pi
+WorkingDirectory=/home/pi/cctv-s3-pipeline
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+EnvironmentFile=/home/pi/cctv-s3-pipeline/.env
+
+ExecStart=/usr/bin/python3 -m src.storage.s3_uploader
+ExecReload=/bin/kill -HUP $MAINPID
+
+Restart=always
+RestartSec=10
+StartLimitInterval=60
+StartLimitBurst=5
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=cctv-uploader
+
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/pi/cctv-s3-pipeline/data
+
+[Install]
+WantedBy=multi-user.target
